@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from openai import OpenAI
 
-client = OpenAI(api_key='sk-RZ2AqjUAg5vwAInVy9Mww3EoIIKFoTxxzLn4JPEG4tT3BlbkFJjT2Q3P4TtcvvY33oOJBNfa-v_wgNxIvO9pISgQ1nIA')
+client = OpenAI(api_key='input open AI API KEY')
 import os
 from docx import Document
 
