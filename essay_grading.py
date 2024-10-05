@@ -55,7 +55,7 @@ def export_to_csv(data):
 
 # Main function for the Streamlit app
 def main():
-    st.title("Essay Grader with GPT-4")
+    st.title("olukoAI Essay Grader by Effico")
 
     # Predefined rubric for grading
     rubric = """
