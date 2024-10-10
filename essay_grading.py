@@ -12,6 +12,33 @@ def extract_text_from_docx(file):
     text = "\n".join([para.text for para in doc.paragraphs])
     return text.strip()
 
+# Function to parse the feedback into rubric components
+def parse_feedback(feedback):
+    # You can customize this based on how GPT provides the feedback
+    # Here, I assume feedback includes specific scoring lines like 'Content Relevance: X/25'
+    scores = {
+        'Content Relevance': None,
+        'Clarity and Organisation': None,
+        'Originality and Creativity': None,
+        'Research and Evidence': None,
+        'Writing Style and Language': None,
+        'Conclusion': None,
+        'Overall Impression': None,
+        'Total Score': None
+    }
+    
+    lines = feedback.split('\n')
+    for line in lines:
+        for key in scores.keys():
+            if key in line:
+                score = line.split(':')[-1].strip()
+                scores[key] = score
+
+    # Assume that the last numerical value mentioned is the total score
+    total_score = sum([int(score) for score in scores.values() if score])
+    scores['Total Score'] = total_score
+    return scores
+
 # Function to grade the essay using GPT-4
 def grade_essay(essay, guided_data, rubric):
     # Sample prompt for grading using GPT-4
@@ -39,9 +66,7 @@ def grade_essay(essay, guided_data, rubric):
     {essay}
     """
 
-    # Set up OpenAI API key
-      # Replace with your OpenAI API key
-
+    # Call OpenAI's GPT-4 for grading
     response = client.chat.completions.create(model="gpt-4",
     messages=[
         {"role": "user", "content": prompt}
@@ -84,6 +109,7 @@ def main():
     # File uploader for new essays to be graded (DOCX)
     new_files = st.file_uploader("Upload DOCX files with essays to be graded", type=["docx"], accept_multiple_files=True)
 
+    # Grading button
     if st.button("Grade Essays"):
         if example_files and scores_file and new_files:
             # Extract scores from the scores file
@@ -120,10 +146,14 @@ def main():
                 # Grading the new essay using the provided rubric and example graded essays
                 result = grade_essay(new_essay, guided_data_combined, rubric)
 
+                # Parse feedback into rubric components
+                parsed_scores = parse_feedback(result)
+
                 # Store results in session state
                 st.session_state.results.append({
                     'Participant Name': new_participant_name,
                     'Essay File': new_file.name,
+                    **parsed_scores,
                     'Feedback': result,
                 })
 
@@ -135,13 +165,14 @@ def main():
         else:
             st.error("Please upload all required files.")
 
-    # Export results button
-    if st.button("Export All Results to CSV"):
-        if st.session_state.results:
-            export_to_csv(st.session_state.results)
-            st.success("All results exported to essay_grades.csv")
-        else:
-            st.warning("No results to export.")
+    # Export results button always visible
+    with st.sidebar:
+        if st.button("Export All Results to CSV"):
+            if st.session_state.results:
+                export_to_csv(st.session_state.results)
+                st.success("All results exported to essay_grades.csv")
+            else:
+                st.warning("No results to export.")
 
 if __name__ == "__main__":
     main()
