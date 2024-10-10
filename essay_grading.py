@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from openai import OpenAI
 
-client = OpenAI(api_key='sk--6O2Vn_cTqR-PqJ9k-lkLn9DP4B5BgZRJk4O73VJSQT3BlbkFJiLL0uwKyLRFZheNeYjeQnqjkaUeJHwhkOQgvufsCsA') #INSERT KEY INSODE HE QUOTES IN THE BRACKET
+client = OpenAI(api_key='') #INSERT KEY INSODE HE QUOTES IN THE BRACKET
 import os
 from docx import Document
 
