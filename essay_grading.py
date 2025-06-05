@@ -5,6 +5,7 @@ from openai import OpenAI
 client = OpenAI(api_key='') #INSERT KEY INSODE HE QUOTES IN THE BRACKET
 import os
 from docx import Document
+import re
 
 # Function to extract text from a .docx file
 def extract_text_from_docx(file):
@@ -32,10 +33,17 @@ def parse_feedback(feedback):
         for key in scores.keys():
             if key in line:
                 score = line.split(':')[-1].strip()
-                scores[key] = score
+                match = re.search(r'(\d+)\s*/', score)
+                if match:
+                    numeric_score = int(match.group(1))
+                else:
+                    try:
+                        numeric_score = int(score)
+                    except ValueError:
+                        numeric_score = None
+                scores[key] = numeric_score
 
-    # Assume that the last numerical value mentioned is the total score
-    total_score = sum([int(score) for score in scores.values() if score])
+    total_score = sum([scores[k] for k in scores if k != 'Total Score' and isinstance(scores[k], int)])
     scores['Total Score'] = total_score
     return scores
 
@@ -82,8 +90,8 @@ def export_to_csv(data):
 def main():
     st.title("olukoAI Essay Grader by Effico")
 
-    # Predefined rubric for grading
-    rubric = """
+    # Default grading instructions and rubric
+    rubric_default = """
     INSTRUCTIONS FOR GRADING
     1. Content and Relevance: 25
     2. Clarity and Organisation: 20
@@ -92,9 +100,13 @@ def main():
     5. Writing Style and Language: 15
     6. Conclusion: 5
     7. Overall Impression: 10
-    
+
     Total: 110
     """
+
+    rubric = st.text_area(
+        "Enter grading instructions and rubric", rubric_default, height=200
+    )
 
     # State to store results
     if 'results' not in st.session_state:
@@ -148,6 +160,10 @@ def main():
 
                 # Parse feedback into rubric components
                 parsed_scores = parse_feedback(result)
+
+                # Display the parsed scores on the UI
+                st.write("Scores:")
+                st.write(parsed_scores)
 
                 # Store results in session state
                 st.session_state.results.append({
