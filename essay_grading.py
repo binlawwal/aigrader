@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from openai import OpenAI
 
-client = OpenAI(api_key='') #INSERT KEY INSODE HE QUOTES IN THE BRACKET
+client = OpenAI(api_key='')  # INSERT KEY INSIDE THE QUOTES IN THE BRACKET
 import os
 from docx import Document
 
@@ -40,31 +40,18 @@ def parse_feedback(feedback):
     return scores
 
 # Function to grade the essay using GPT-4
-def grade_essay(essay, guided_data, rubric):
-    # Sample prompt for grading using GPT-4
-    prompt = f"""
-    You are an AI that grades essays based on a provided rubric, ensuring an unbiased evaluation while considering clarity, originality, organization, and depth of analysis.
+def grade_essay(essay, guided_data, rubric, instructions):
+    """Send the essay and grading rubric to GPT-4 for evaluation."""
+    prompt = f"""{instructions}
 
-    The topic of the essay is: "The Role of Technology in Bridging Nigeria’s Doctor-to-Patient Ratio."
+Here is the rubric for grading:
+{rubric}
 
-    Consider the following attributes in your evaluation:
+Here are examples of previously graded essays and their scores: {guided_data}
 
-    Content Relevance: Ensure that the essay addresses the topic thoroughly and engages with the main issues effectively.
-    Clarity and Organization: Look for logical flow and structure in the essay, ensuring that ideas are presented clearly and cohesively.
-    Originality and Creativity: Assess the uniqueness of the perspective and insights presented, encouraging innovative thinking.
-    Research and Evidence: Evaluate the depth of research, the use of credible sources, and the integration of data and examples to support claims.
-    Writing Style and Language: Consider the appropriateness of language, grammar, and style, aiming for clear and engaging writing.
-    Conclusion: Check if the conclusion effectively summarizes the main points and provides a strong final impression.
-    Overall Impression: Formulate an overall assessment of the essay's impact, quality, and coherence.
-    
-    Here is the rubric for grading:
-    {rubric}
-    
-    Here are examples of previously graded essays and their scores: {guided_data}
-    
-    Please grade the following essay and provide feedback:
-    {essay}
-    """
+Please grade the following essay and provide feedback:
+{essay}
+"""
 
     # Call OpenAI's GPT-4 for grading
     response = client.chat.completions.create(model="gpt-4",
@@ -82,19 +69,38 @@ def export_to_csv(data):
 def main():
     st.title("olukoAI Essay Grader by Effico")
 
-    # Predefined rubric for grading
-    rubric = """
-    INSTRUCTIONS FOR GRADING
-    1. Content and Relevance: 25
-    2. Clarity and Organisation: 20
-    3. Originality and Creativity: 15
-    4. Research and Evidence: 20
-    5. Writing Style and Language: 15
-    6. Conclusion: 5
-    7. Overall Impression: 10
-    
-    Total: 110
-    """
+    # Default instructions used for grading
+    default_instructions = """
+You are an AI that grades essays based on a provided rubric, ensuring an unbiased evaluation while considering clarity, originality, organization, and depth of analysis.
+
+The topic of the essay is: "The Role of Technology in Bridging Nigeria’s Doctor-to-Patient Ratio."
+
+Consider the following attributes in your evaluation:
+
+Content Relevance: Ensure that the essay addresses the topic thoroughly and engages with the main issues effectively.
+Clarity and Organization: Look for logical flow and structure in the essay, ensuring that ideas are presented clearly and cohesively.
+Originality and Creativity: Assess the uniqueness of the perspective and insights presented, encouraging innovative thinking.
+Research and Evidence: Evaluate the depth of research, the use of credible sources, and the integration of data and examples to support claims.
+Writing Style and Language: Consider the appropriateness of language, grammar, and style, aiming for clear and engaging writing.
+Conclusion: Check if the conclusion effectively summarizes the main points and provides a strong final impression.
+Overall Impression: Formulate an overall assessment of the essay's impact, quality, and coherence.
+"""
+
+    default_rubric = """
+INSTRUCTIONS FOR GRADING
+1. Content and Relevance: 25
+2. Clarity and Organisation: 20
+3. Originality and Creativity: 15
+4. Research and Evidence: 20
+5. Writing Style and Language: 15
+6. Conclusion: 5
+7. Overall Impression: 10
+
+Total: 110
+"""
+
+    instructions = st.text_area("Enter grading instructions", default_instructions, height=300)
+    rubric = st.text_area("Enter rubric", default_rubric, height=200)
 
     # State to store results
     if 'results' not in st.session_state:
@@ -144,7 +150,7 @@ def main():
                 st.write(f"Grading essay for: {new_participant_name}")
 
                 # Grading the new essay using the provided rubric and example graded essays
-                result = grade_essay(new_essay, guided_data_combined, rubric)
+                result = grade_essay(new_essay, guided_data_combined, rubric, instructions)
 
                 # Parse feedback into rubric components
                 parsed_scores = parse_feedback(result)
